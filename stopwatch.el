@@ -9,6 +9,12 @@
 ;;
 ;; Stop stopwatch
 ;;   M-x stopwatch-stop
+;;
+;; Pause stopwatch
+;;   M-x stopwatch-pause
+;;
+;; Restart stopwatch
+;;   M-x stopwatch-restart
 
 ;;; Code:
 
@@ -24,29 +30,39 @@
   "Sign of timer"
   :type 'string)
 
-(defface stopwatch-sign
-  '((((class color) (min-colors 88) (background light))
-     :foreground "blue")
-    (((class color) (background dark))
-     (:foreground "cyan"))
-    (t nil))
-  "mode-line-face")
-
 (defface stopwatch-timer
   '((t (:weight bold)))
+  "mode-line-face")
+
+(defface working-face
+  '((t (:foreground "cyan")))
+  "mode-line-face")
+
+(defface pausing-face
+  '((t (:foreground "green")))
   "mode-line-face")
 
 (defvar stopwatch--timer nil)
 (defvar stopwatch--remainder-seconds 0)
 (defvar stopwatch--mode-line "")
 
+(defvar current-state 'working
+  "Stopwatch statement flag, working or pausing")
+
 (defsubst stopwatch--time-to-string (seconds)
   (format "%02d:%02d " (/ seconds 60) (mod seconds 60))
   )
 
+(defun propertize-sign ()
+  (cond ((eq current-state 'working)
+	 (propertize stopwatch-mode-line-sign 'face 'working-face))
+	((eq current-state 'pausing)
+	 (propertize stopwatch-mode-line-sign 'face 'pausing-face))
+	(t nil)))
+
 (defun stopwatch--propertize-mode-line ()
   (unless (string-empty-p stopwatch--mode-line)
-    (concat (propertize stopwatch-mode-line-sign 'face 'stopwatch-sign)
+    (concat (propertize-sign)
 	    (propertize stopwatch--mode-line 'face 'stopwatch-timer))))
 
 (defun stopwatch--set-mode-line ()
@@ -70,6 +86,7 @@
     (error "Already start stopwatch!!"))
   (unless minutes
     (setq minutes 0))
+  (setq current-state 'working)
   (stopwatch--set-remainder-second minutes)
   (setq stopwatch--timer (run-with-timer 0 1 'stopwatch-timer--tick)))
 
@@ -82,10 +99,12 @@
 
 (defun stopwatch-restart ()
   (interactive)
-    (setq stopwatch--timer (run-with-timer 0 1 'stopwatch-timer--tick)))
+  (setq current-state 'working)
+  (setq stopwatch--timer (run-with-timer 0 1 'stopwatch-timer--tick)))
 
 (defun stopwatch-pause ()
   (interactive)
+  (setq current-state 'pausing)
   (cancel-timer stopwatch--timer))
 
 (unless (member '(:eval (stopwatch--propertize-mode-line)) mode-line-format)
