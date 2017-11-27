@@ -1,7 +1,13 @@
 # Stopwatch in mode-line
 
 Count up time and show remainder time at mode-line.
+
 It's a package created by fully respecting [mode-line-timer.el](https://github.com/syohex/emacs-mode-line-timer).
+
+## Screenshot
+![working](image/working.png)
+
+![pausing](image/pausing.png)
 
 ## Interface
 
