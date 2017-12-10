@@ -9,12 +9,6 @@
 ;;
 ;; Stop stopwatch
 ;;   M-x stopwatch-stop
-;;
-;; Pause stopwatch
-;;   M-x stopwatch-pause
-;;
-;; Restart stopwatch
-;;   M-x stopwatch-restart
 
 ;;; Code:
 
@@ -25,6 +19,17 @@
   "Simple timer"
   :prefix "stopwatch-"
   :group 'timer)
+
+(defvar notification-center-title "Emacs")
+(defun notification-center (msg)
+  (let ((tmpfile (make-temp-file "notification-center")))
+   (with-temp-file tmpfile
+     (insert
+      (format "display notification \"%s\" with title \"%s\""
+	      msg notification-center-title)))
+   (unless (zerop (call-process "osascript" tmpfile))
+     (message "Failed: Call AppleScript"))
+   (delete-file tmpfile)))
 
 (defcustom stopwatch-mode-line-sign "●"
   "Sign of timer"
@@ -49,6 +54,9 @@
 (defvar current-state 'working
   "Stopwatch statement flag, working or pausing")
 
+(defvar notification-current-state 0) ;; 0 or 1
+(defvar notification-time nil)
+
 (defsubst stopwatch--time-to-string (seconds)
   (format "%02d:%02d " (/ seconds 60) (mod seconds 60))
   )
@@ -70,15 +78,25 @@
 	(stopwatch--time-to-string stopwatch--remainder-seconds)))
 
 (defun stopwatch-timer--tick ()
-  (cl-incf stopwatch--remainder-seconds)
-  (stopwatch--set-mode-line)
-  (stopwatch--propertize-mode-line)
-  (force-mode-line-update))
+  (if (and (> stopwatch--remainder-seconds (* notification-time 60))
+	   (> notification-current-state 0))
+      (progn
+	(setq notification-current-state 0)
+	(notification-center "Stopwatch Notification"))
+    (cl-incf stopwatch--remainder-seconds)
+    (stopwatch--set-mode-line)
+    (stopwatch--propertize-mode-line)
+    (force-mode-line-update)))
 
 (defsubst stopwatch--set-remainder-second (minutes)
   (setq stopwatch--remainder-seconds (* 60 minutes)))
 
 ;;;###autoload
+
+(defun stopwatch-notification-time (minutes)
+  (interactive "nNotification Minutes:")
+  (setq notification-current-state 1)
+  (setq notification-time minutes))
 
 (defun stopwatch-start (&optional minutes)
   (interactive)
@@ -86,6 +104,7 @@
     (error "Already start stopwatch!!"))
   (unless minutes
     (setq minutes 0))
+  (setq notification-current-state 0)
   (setq current-state 'working)
   (stopwatch--set-remainder-second minutes)
   (setq stopwatch--timer (run-with-timer 0 1 'stopwatch-timer--tick)))
