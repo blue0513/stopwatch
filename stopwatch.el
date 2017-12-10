@@ -9,6 +9,12 @@
 ;;
 ;; Stop stopwatch
 ;;   M-x stopwatch-stop
+;;
+;; Pause stopwatch
+;;   M-x stopwatch-pause
+;;
+;; Restart stopwatch
+;;   M-x stopwatch-restart
 
 ;;; Code:
 
