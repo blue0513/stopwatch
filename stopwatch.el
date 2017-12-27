@@ -60,8 +60,8 @@
 (defvar current-state 'working
   "Stopwatch statement flag, working or pausing")
 
-(defvar notification-current-state 0) ;; 0 or 1
-(defvar notification-time nil)
+(defvar notification-current-state 'disabled) ;; disabled or enabled
+(defvar notification-time 0)
 
 (defsubst stopwatch--time-to-string (seconds)
   (format "%02d:%02d " (/ seconds 60) (mod seconds 60))
@@ -85,9 +85,9 @@
 
 (defun stopwatch-timer--tick ()
   (if (and (> stopwatch--remainder-seconds (* notification-time 60))
-	   (> notification-current-state 0))
+	   (eq notification-current-state 'enabled))
       (progn
-	(setq notification-current-state 0)
+	(setq notification-current-state 'disabled)
 	(notification-center "Stopwatch Notification"))
     (cl-incf stopwatch--remainder-seconds)
     (stopwatch--set-mode-line)
@@ -101,7 +101,7 @@
 
 (defun stopwatch-notification-time (minutes)
   (interactive "nNotification Minutes:")
-  (setq notification-current-state 1)
+  (setq notification-current-state 'enabled)
   (setq notification-time minutes))
 
 (defun stopwatch-start (&optional minutes)
@@ -110,7 +110,6 @@
     (error "Already start stopwatch!!"))
   (unless minutes
     (setq minutes 0))
-  (setq notification-current-state 0)
   (setq current-state 'working)
   (stopwatch--set-remainder-second minutes)
   (setq stopwatch--timer (run-with-timer 0 1 'stopwatch-timer--tick)))
@@ -120,6 +119,7 @@
   (cancel-timer stopwatch--timer)
   (setq stopwatch--timer nil
 	stopwatch--mode-line "")
+  (setq notification-current-state 'disabled)
   (force-mode-line-update))
 
 (defun stopwatch-restart ()
