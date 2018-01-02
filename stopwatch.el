@@ -80,8 +80,12 @@
 	    (propertize stopwatch--mode-line 'face 'stopwatch-timer))))
 
 (defun stopwatch--set-mode-line ()
-  (setq stopwatch--mode-line
-	(stopwatch--time-to-string stopwatch--remainder-seconds)))
+  (if (eq notification-current-state 'enabled)
+      (setq stopwatch--mode-line
+	    (concat (stopwatch--time-to-string stopwatch--remainder-seconds)
+		    (format "(%02d) " notification-time)))
+    (setq stopwatch--mode-line
+	  (stopwatch--time-to-string stopwatch--remainder-seconds))))
 
 (defun stopwatch-timer--tick ()
   (if (and (> stopwatch--remainder-seconds (* notification-time 60))
