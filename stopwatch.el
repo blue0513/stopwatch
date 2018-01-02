@@ -26,6 +26,17 @@
   :prefix "stopwatch-"
   :group 'timer)
 
+(defvar notification-center-title "Emacs")
+(defun notification-center (msg)
+  (let ((tmpfile (make-temp-file "notification-center")))
+   (with-temp-file tmpfile
+     (insert
+      (format "display notification \"%s\" with title \"%s\""
+	      msg notification-center-title)))
+   (unless (zerop (call-process "osascript" tmpfile))
+     (message "Failed: Call AppleScript"))
+   (delete-file tmpfile)))
+
 (defcustom stopwatch-mode-line-sign "●"
   "Sign of timer"
   :type 'string)
@@ -49,6 +60,9 @@
 (defvar current-state 'working
   "Stopwatch statement flag, working or pausing")
 
+(defvar notification-current-state 'disabled) ;; disabled or enabled
+(defvar notification-time 0)
+
 (defsubst stopwatch--time-to-string (seconds)
   (format "%02d:%02d " (/ seconds 60) (mod seconds 60))
   )
@@ -70,15 +84,25 @@
 	(stopwatch--time-to-string stopwatch--remainder-seconds)))
 
 (defun stopwatch-timer--tick ()
-  (cl-incf stopwatch--remainder-seconds)
-  (stopwatch--set-mode-line)
-  (stopwatch--propertize-mode-line)
-  (force-mode-line-update))
+  (if (and (> stopwatch--remainder-seconds (* notification-time 60))
+	   (eq notification-current-state 'enabled))
+      (progn
+	(setq notification-current-state 'disabled)
+	(notification-center "Stopwatch Notification"))
+    (cl-incf stopwatch--remainder-seconds)
+    (stopwatch--set-mode-line)
+    (stopwatch--propertize-mode-line)
+    (force-mode-line-update)))
 
 (defsubst stopwatch--set-remainder-second (minutes)
   (setq stopwatch--remainder-seconds (* 60 minutes)))
 
 ;;;###autoload
+
+(defun stopwatch-notification-time (minutes)
+  (interactive "nNotification Minutes:")
+  (setq notification-current-state 'enabled)
+  (setq notification-time minutes))
 
 (defun stopwatch-start (&optional minutes)
   (interactive)
@@ -95,6 +119,7 @@
   (cancel-timer stopwatch--timer)
   (setq stopwatch--timer nil
 	stopwatch--mode-line "")
+  (setq notification-current-state 'disabled)
   (force-mode-line-update))
 
 (defun stopwatch-restart ()
