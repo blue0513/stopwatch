@@ -26,3 +26,13 @@ Pause stopwatch.
 #### `stopwatch-restart`
 
 Restart stopwatch which is paused by `stopwatch-pause`.
+
+## Desktop Notification
+
+It's only available for MacOS because it uses AppleScript.
+
+#### `stopwatch-notification-time`
+
+Set timer for the desktop notification.
+
+![notification](image/notification.png)
