@@ -21,11 +21,11 @@ Stop stopwatch.
 
 #### `stopwatch-pause`
 
-Pause stopwatch.
+Toggle (pause/resume) stopwatch.
 
 #### `stopwatch-restart`
 
-Restart stopwatch which is paused by `stopwatch-pause`.
+Restart stopwatch counter to begin from 0.
 
 ## Desktop Notification
 
