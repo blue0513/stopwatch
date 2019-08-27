@@ -128,13 +128,18 @@
 
 (defun stopwatch-restart ()
   (interactive)
-  (setq current-state 'working)
-  (setq stopwatch--timer (run-with-timer 0 1 'stopwatch-timer--tick)))
+  (stopwatch-stop)
+  (stopwatch-start))
 
 (defun stopwatch-pause ()
   (interactive)
-  (setq current-state 'pausing)
-  (cancel-timer stopwatch--timer))
+  (if (eq current-state 'pausing)
+      (progn
+        (setq current-state 'working)
+        (setq stopwatch--timer (run-with-timer 0 1 'stopwatch-timer--tick)))
+    (progn
+      (setq current-state 'pausing)
+      (cancel-timer stopwatch--timer))))
 
 (unless (member '(:eval (stopwatch--propertize-mode-line)) mode-line-format)
   (setq-default mode-line-format
